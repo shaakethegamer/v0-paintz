@@ -114,12 +114,12 @@ export function RoomContent({
 
       {/* Header */}
       {!isMaximized && (
-        <div className="flex items-center justify-between bg-card rounded-xl shadow-lg border p-4 flex-shrink-0">
+        <div className="flex items-center justify-between rounded-xl shadow-lg border p-4 flex-shrink-0 bg-[rgba(191,157,250,1)]">
           <div className="flex items-center gap-4">
             <AvatarDisplay avatar={avatar} size={40} />
             <div>
               <h1 className="text-xl font-bold">{username}</h1>
-              <p className="text-sm text-muted-foreground">Room: {roomCode}</p>
+              <p className="text-xl text-foreground">Room: {roomCode}</p>
             </div>
           </div>
 

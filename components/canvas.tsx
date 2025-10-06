@@ -456,11 +456,11 @@ export function Canvas({ socket, roomCode, isMaximized, onToggleMaximize }: Canv
 
       <div
         ref={containerRef}
-        className={`bg-card rounded-xl shadow-lg border overflow-auto min-h-0 relative ${
+        className={`bg-card rounded-xl shadow-lg overflow-auto min-h-0 relative border-[.5px] leading-7 ${
           isMaximized ? "fixed inset-4 z-50 flex-none" : "flex-1"
         }`}
       >
-        <div className="inline-block min-w-full min-h-full p-4">
+        <div className="inline-block min-w-full min-h-full p-4 bg-background">
           <div className="relative inline-block border-4 border-primary/30 rounded-lg">
             <canvas
               ref={canvasRef}
