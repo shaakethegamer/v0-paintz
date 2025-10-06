@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useParams, useSearchParams, useRouter } from "next/navigation"
 import { Canvas } from "@/components/canvas"
 import { Chat } from "@/components/chat"
@@ -31,7 +31,7 @@ const UsersIcon = () => (
   </svg>
 )
 
-export default function RoomPage() {
+function RoomContent() {
   const params = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -137,5 +137,22 @@ export default function RoomPage() {
         <Chat socket={socket} roomCode={roomCode} username={username} avatar={avatar} />
       </div>
     </div>
+  )
+}
+
+export default function RoomPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading room...</p>
+          </div>
+        </div>
+      }
+    >
+      <RoomContent />
+    </Suspense>
   )
 }
