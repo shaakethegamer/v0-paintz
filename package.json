@@ -1,0 +1,38 @@
+{
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:socket\"",
+    "dev:socket": "node server.js",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-label": "latest",
+    "@radix-ui/react-scroll-area": "latest",
+    "@radix-ui/react-separator": "latest",
+    "@radix-ui/react-slider": "latest",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "concurrently": "^8.2.2",
+    "http": "latest",
+    "lucide-react": "^0.454.0",
+    "net": "latest",
+    "next": "15.2.4",
+    "react": "^19",
+    "react-dom": "^19",
+    "socket.io": "latest",
+    "socket.io-client": "latest",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss-animate": "^1.0.7",
+    "tw-animate-css": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "postcss": "^8.5",
+    "tailwindcss": "^4.1.9",
+    "typescript": "^5"
+  }
+}
