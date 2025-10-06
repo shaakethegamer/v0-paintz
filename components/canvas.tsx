@@ -6,30 +6,20 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Separator } from "@/components/ui/separator"
-import { Pen, Eraser, Trash2, PaintBucket, Undo, Redo } from "lucide-react"
+import { Pen, Eraser, Trash2, PaintBucket, Undo, Redo, Maximize2, Minimize2 } from "lucide-react"
 import type { Socket } from "socket.io-client"
 import type { DrawData } from "@/types/socket"
 
 interface CanvasProps {
   socket: Socket | null
   roomCode: string
+  isMaximized: boolean
+  onToggleMaximize: () => void
 }
 
-const COLORS = [
-  "#000000", // Black
-  "#FFFFFF", // White
-  "#8B5CF6", // Purple
-  "#EC4899", // Pink
-  "#06B6D4", // Cyan
-  "#10B981", // Green
-  "#F59E0B", // Yellow
-  "#EF4444", // Red
-  "#F97316", // Orange
-  "#3B82F6", // Blue
-]
-
-export function Canvas({ socket, roomCode }: CanvasProps) {
+export function Canvas({ socket, roomCode, isMaximized, onToggleMaximize }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [tool, setTool] = useState<"pen" | "eraser" | "fill">("pen")
   const [color, setColor] = useState("#000000")
@@ -37,6 +27,21 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
   const [history, setHistory] = useState<ImageData[]>([])
   const [historyStep, setHistoryStep] = useState(-1)
   const lastPosRef = useRef<{ x: number; y: number } | null>(null)
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
+  const [showCursor, setShowCursor] = useState(false)
+  const [colorPresets, setColorPresets] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("colorPresets")
+      return saved ? JSON.parse(saved) : ["#000000", "#FF0000", "#00FF00", "#0000FF", "#FFFF00"]
+    }
+    return ["#000000", "#FF0000", "#00FF00", "#0000FF", "#FFFF00"]
+  })
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("colorPresets", JSON.stringify(colorPresets))
+    }
+  }, [colorPresets])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -45,22 +50,14 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    const resizeCanvas = () => {
-      const container = canvas.parentElement
-      if (container) {
-        canvas.width = container.clientWidth
-        canvas.height = container.clientHeight
-        ctx.fillStyle = "#FFFFFF"
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-      }
-    }
+    canvas.width = 1024
+    canvas.height = 768
 
-    resizeCanvas()
-    window.addEventListener("resize", resizeCanvas)
+    // Fill with white background
+    ctx.fillStyle = "#FFFFFF"
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     saveToHistory()
-
-    return () => window.removeEventListener("resize", resizeCanvas)
   }, [])
 
   useEffect(() => {
@@ -148,10 +145,16 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
       ctx.lineCap = "round"
       ctx.lineJoin = "round"
 
-      if (data.isStart) {
-        ctx.beginPath()
-        ctx.moveTo(data.x, data.y)
+      ctx.beginPath()
+
+      if (data.isStart || !data.prevX || !data.prevY) {
+        // First point of a stroke - draw a dot
+        ctx.arc(data.x, data.y, data.size / 2, 0, Math.PI * 2)
+        ctx.fillStyle = data.color
+        ctx.fill()
       } else {
+        // Subsequent points - draw line from previous position
+        ctx.moveTo(data.prevX, data.prevY)
         ctx.lineTo(data.x, data.y)
         ctx.stroke()
       }
@@ -160,15 +163,36 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
     }
   }
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    // Calculate scaled coordinates for drawing
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
+
+    // Set cursor position in CSS pixels relative to canvas (not scaled)
+    setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+    draw(e)
+  }
+
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     const ctx = canvas?.getContext("2d")
-    if (!ctx) return
+    if (!ctx || !canvas) return
 
     setIsDrawing(true)
-    const rect = canvas!.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
 
     lastPosRef.current = { x, y }
 
@@ -176,7 +200,7 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
     ctx.moveTo(x, y)
 
     if (tool === "fill") {
-      floodFill(x, y)
+      floodFill(Math.floor(x), Math.floor(y))
       setIsDrawing(false)
     } else {
       const drawData: DrawData = {
@@ -187,6 +211,8 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
         tool,
         isStart: true,
       }
+
+      drawOnCanvas(drawData, ctx)
 
       if (socket) {
         socket.emit("draw", { ...drawData, roomCode })
@@ -202,12 +228,17 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
     if (!ctx || !canvas) return
 
     const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
 
     const drawData: DrawData = {
       x,
       y,
+      prevX: lastPosRef.current?.x,
+      prevY: lastPosRef.current?.y,
       color: tool === "eraser" ? "#FFFFFF" : color,
       size: brushSize,
       tool,
@@ -299,9 +330,19 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
     }
   }
 
+  const saveColorPreset = (index: number) => {
+    const newPresets = [...colorPresets]
+    newPresets[index] = color
+    setColorPresets(newPresets)
+  }
+
+  const toggleMaximize = () => {
+    onToggleMaximize()
+  }
+
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex flex-wrap items-center gap-4 p-4 bg-card rounded-xl shadow-lg border">
+      <div className="flex flex-wrap items-center gap-4 p-4 bg-card rounded-xl shadow-lg border flex-shrink-0">
         <div className="flex items-center gap-2">
           <Button
             size="icon"
@@ -331,26 +372,54 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
 
         <Separator orientation="vertical" className="h-8" />
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setColor(c)}
-              className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-110 ${
-                color === c ? "border-primary ring-2 ring-primary/20" : "border-border"
-              }`}
-              style={{ backgroundColor: c }}
-              title={c}
-            />
-          ))}
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="color-picker"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-border hover:border-primary transition-colors cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg border-2 border-border" style={{ backgroundColor: color }} />
+            <span className="text-sm font-medium">Pick Color</span>
+          </label>
+          <input
+            id="color-picker"
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            className="sr-only"
+          />
+          <span className="text-xs font-mono text-muted-foreground">{color.toUpperCase()}</span>
         </div>
 
-        <Separator orientation="vertical" className="h-8" />
-
-        <div className="flex items-center gap-3 min-w-[150px]">
-          <span className="text-sm font-medium whitespace-nowrap">Size: {brushSize}</span>
-          <Slider value={[brushSize]} onValueChange={(v) => setBrushSize(v[0])} min={1} max={50} step={1} />
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground text-center">Right click to save preset</span>
+          <div className="flex items-center gap-2">
+            {colorPresets.map((presetColor, index) => (
+              <div key={index} className="flex flex-col items-center gap-1">
+                <button
+                  onClick={() => setColor(presetColor)}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    saveColorPreset(index)
+                  }}
+                  className="w-8 h-8 rounded-lg border-2 border-border hover:border-primary transition-colors cursor-pointer"
+                  style={{ backgroundColor: presetColor }}
+                  title={`Preset ${index + 1}\nClick to use\nRight-click to save current color`}
+                />
+              </div>
+            ))}
+          </div>
         </div>
+
+        {!isMaximized && (
+          <>
+            <Separator orientation="vertical" className="h-8" />
+
+            <div className="flex items-center gap-3 min-w-[150px]">
+              <span className="text-sm font-medium whitespace-nowrap">Size: {brushSize}</span>
+              <Slider value={[brushSize]} onValueChange={(v) => setBrushSize(v[0])} min={1} max={50} step={1} />
+            </div>
+          </>
+        )}
 
         <Separator orientation="vertical" className="h-8" />
 
@@ -374,17 +443,57 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
         <Button size="icon" variant="destructive" onClick={clearCanvas} title="Clear Canvas">
           <Trash2 className="w-4 h-4" />
         </Button>
+
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={toggleMaximize}
+          title={isMaximized ? "Exit Fullscreen" : "Maximize Canvas"}
+        >
+          {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+        </Button>
       </div>
 
-      <div className="flex-1 bg-card rounded-xl shadow-lg border overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          className="cursor-crosshair w-full h-full"
-        />
+      <div
+        ref={containerRef}
+        className={`bg-card rounded-xl shadow-lg border overflow-auto min-h-0 relative ${
+          isMaximized ? "fixed inset-4 z-50 flex-none" : "flex-1"
+        }`}
+      >
+        <div className="inline-block min-w-full min-h-full p-4">
+          <div className="relative inline-block border-4 border-primary/30 rounded-lg">
+            <canvas
+              ref={canvasRef}
+              onMouseDown={startDrawing}
+              onMouseMove={handleMouseMove}
+              onMouseUp={stopDrawing}
+              onMouseLeave={() => {
+                stopDrawing()
+                setShowCursor(false)
+              }}
+              onMouseEnter={() => setShowCursor(true)}
+              className="block"
+              style={{
+                cursor: tool === "fill" ? "crosshair" : "none",
+                width: "1024px",
+                height: "768px",
+              }}
+            />
+            {tool !== "fill" && showCursor && (
+              <div
+                className="pointer-events-none absolute rounded-full border-2 border-primary/50 bg-transparent"
+                style={{
+                  width: `${brushSize}px`,
+                  height: `${brushSize}px`,
+                  left: `${cursorPos.x}px`,
+                  top: `${cursorPos.y}px`,
+                  transform: "translate(-50%, -50%)",
+                  transition: "width 0.1s, height 0.1s",
+                }}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

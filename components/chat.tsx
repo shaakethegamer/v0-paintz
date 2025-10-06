@@ -5,7 +5,6 @@ import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send } from "lucide-react"
 import { MessageCircle } from "lucide-react"
 import type { Socket } from "socket.io-client"
@@ -83,7 +82,12 @@ export function Chat({ socket, roomCode, username, avatar }: ChatProps) {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      // Use setTimeout to ensure DOM has updated
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+        }
+      }, 0)
     }
   }, [messages])
 
@@ -122,9 +126,9 @@ export function Chat({ socket, roomCode, username, avatar }: ChatProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-xl shadow-lg border">
+    <div className="flex flex-col h-full bg-card rounded-xl shadow-lg border overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 border-b">
+      <div className="flex items-center gap-2 p-4 border-b flex-shrink-0">
         <MessageCircle className="w-5 h-5 text-primary" />
         <h2 className="font-semibold">Chat</h2>
         <span className="ml-auto text-sm text-muted-foreground">{messages.length} messages</span>
@@ -133,8 +137,8 @@ export function Chat({ socket, roomCode, username, avatar }: ChatProps) {
         )}
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      {/* Scrollable container with fixed height */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 min-h-0">
         <div className="space-y-3">
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
@@ -170,10 +174,10 @@ export function Chat({ socket, roomCode, username, avatar }: ChatProps) {
             ))
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Input */}
-      <div className="p-4 border-t">
+      <div className="p-4 border-t flex-shrink-0">
         <div className="flex gap-2">
           <Input
             placeholder={isConnected ? "Type a message..." : "Connecting..."}

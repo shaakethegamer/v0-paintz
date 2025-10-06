@@ -45,6 +45,7 @@ export function RoomContent({
   const [userCount, setUserCount] = useState(1)
   const [connectionError, setConnectionError] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(true)
+  const [isMaximized, setIsMaximized] = useState(false)
 
   useEffect(() => {
     const setupSocket = async () => {
@@ -96,47 +97,62 @@ export function RoomContent({
   }
 
   return (
-    <div className="h-screen flex flex-col p-4 gap-4">
+    <div className="fixed inset-0 flex flex-col p-4 gap-4 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 -z-10" />
 
       {isConnecting && (
-        <div className="bg-blue-500/10 border border-blue-500 text-blue-700 px-4 py-2 rounded-lg text-sm">
+        <div className="bg-blue-500/10 border border-blue-500 text-blue-700 px-4 py-2 rounded-lg text-sm flex-shrink-0">
           Connecting to server...
         </div>
       )}
 
       {connectionError && (
-        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-2 rounded-lg text-sm">
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-2 rounded-lg text-sm flex-shrink-0">
           {connectionError}
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between bg-card rounded-xl shadow-lg border p-4">
-        <div className="flex items-center gap-4">
-          <AvatarDisplay avatar={avatar} size={40} />
-          <div>
-            <h1 className="text-xl font-bold">{username}</h1>
-            <p className="text-sm text-muted-foreground">Room: {roomCode}</p>
+      {!isMaximized && (
+        <div className="flex items-center justify-between bg-card rounded-xl shadow-lg border p-4 flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <AvatarDisplay avatar={avatar} size={40} />
+            <div>
+              <h1 className="text-xl font-bold">{username}</h1>
+              <p className="text-sm text-muted-foreground">Room: {roomCode}</p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
-            <UsersIcon />
-            <span className="text-sm font-medium">{userCount} online</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
+              <UsersIcon />
+              <span className="text-sm font-medium">{userCount} online</span>
+            </div>
+            <Button variant="outline" onClick={handleLeave}>
+              <LogOutIcon />
+              <span className="ml-2">Leave</span>
+            </Button>
           </div>
-          <Button variant="outline" onClick={handleLeave}>
-            <LogOutIcon />
-            <span className="ml-2">Leave</span>
-          </Button>
         </div>
-      </div>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-4 min-h-0">
-        <Canvas socket={socket} roomCode={roomCode} />
-        <Chat socket={socket} roomCode={roomCode} username={username} avatar={avatar} />
+      <div
+        className={`flex-1 ${isMaximized ? "" : "grid grid-cols-1 lg:grid-cols-[1fr_350px]"} gap-4 min-h-0 overflow-hidden`}
+      >
+        <div className="h-full min-h-0 overflow-hidden">
+          <Canvas
+            socket={socket}
+            roomCode={roomCode}
+            isMaximized={isMaximized}
+            onToggleMaximize={() => setIsMaximized(!isMaximized)}
+          />
+        </div>
+        {!isMaximized && (
+          <div className="h-full min-h-0 overflow-hidden">
+            <Chat socket={socket} roomCode={roomCode} username={username} avatar={avatar} />
+          </div>
+        )}
       </div>
     </div>
   )
