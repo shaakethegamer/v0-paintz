@@ -1,7 +1,65 @@
 const { createServer } = require("http")
 const { Server } = require("socket.io")
 
-const httpServer = createServer()
+const httpServer = createServer((req, res) => {
+  if (req.url === "/" || req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "text/html" })
+    res.end(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>WebSocket Server</title>
+          <style>
+            body {
+              font-family: system-ui, -apple-system, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+            }
+            .container {
+              text-align: center;
+              padding: 2rem;
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 1rem;
+              backdrop-filter: blur(10px);
+            }
+            h1 { margin: 0 0 1rem 0; }
+            .status { 
+              display: inline-block;
+              padding: 0.5rem 1rem;
+              background: #10b981;
+              border-radius: 0.5rem;
+              font-weight: bold;
+            }
+            .info {
+              margin-top: 1rem;
+              opacity: 0.9;
+              font-size: 0.9rem;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>🎨 Multiplayer Drawing Game</h1>
+            <div class="status">✓ WebSocket Server Running</div>
+            <div class="info">
+              <p>This is the backend WebSocket server.</p>
+              <p>Connect your frontend app to this URL to enable real-time features.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `)
+  } else {
+    res.writeHead(404, { "Content-Type": "text/plain" })
+    res.end("Not Found")
+  }
+})
+
 const io = new Server(httpServer, {
   cors: {
     origin: "*",
