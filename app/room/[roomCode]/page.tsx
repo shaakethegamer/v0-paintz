@@ -1,15 +1,17 @@
 import { Suspense } from "react"
 import { RoomContent } from "@/components/room-content"
 
-export default function RoomPage({
+export default async function RoomPage({
   params,
   searchParams,
 }: {
-  params: { roomCode: string }
-  searchParams: { username?: string; avatar?: string }
+  params: Promise<{ roomCode: string }>
+  searchParams: Promise<{ username?: string; avatar?: string }>
 }) {
-  const username = searchParams.username || "Anonymous"
-  const avatar = searchParams.avatar
+  const { roomCode } = await params
+  const search = await searchParams
+  const username = search.username || "Anonymous"
+  const avatar = search.avatar
 
   return (
     <Suspense
@@ -22,7 +24,7 @@ export default function RoomPage({
         </div>
       }
     >
-      <RoomContent roomCode={params.roomCode} username={username} avatar={avatar} />
+      <RoomContent roomCode={roomCode} username={username} avatar={avatar} />
     </Suspense>
   )
 }

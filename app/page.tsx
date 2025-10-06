@@ -21,7 +21,7 @@ const PaintbrushIcon = () => (
 )
 
 const UsersIcon = () => (
-  <svg
+  <svg className="mx-1.5 ml-[-30px]"
     xmlns="http://www.w3.org/2000/svg"
     width="20"
     height="20"
@@ -41,13 +41,13 @@ const UsersIcon = () => (
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 text-chart-3 bg-sidebar-ring">
+    <div className="min-h-screen flex items-center justify-center p-4 text-chart-3 bg-sidebar-ring font-sans">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 -z-10" />
 
       <Card className="w-full max-w-md p-8 shadow-2xl">
-        <div className="flex items-center gap-6 flex-col">
+        <div className="flex items-center gap-6 flex-col text-neutral-700">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary/10 rounded-2xl">
+            <div className="p-3 rounded-2xl bg-sidebar-primary">
               <PaintbrushIcon />
             </div>
             <h1 className="text-4xl font-bold text-balance">Paintz</h1>
@@ -67,7 +67,7 @@ export default function HomePage() {
             <Link href="/join" className="w-full">
               <Button size="lg" variant="outline" className="w-full text-lg font-semibold bg-transparent">
                 <UsersIcon />
-                <span className="ml-2">Join Room</span>
+                <span className="ml-2 text-sidebar-primary">Join Room</span>
               </Button>
             </Link>
           </div>
