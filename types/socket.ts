@@ -16,6 +16,7 @@ export interface DrawData {
   color: string
   size: number
   tool: "pen" | "eraser" | "fill"
+  isStart?: boolean
 }
 
 export interface ChatMessage {

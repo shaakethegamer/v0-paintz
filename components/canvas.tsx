@@ -36,6 +36,7 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
   const [brushSize, setBrushSize] = useState(5)
   const [history, setHistory] = useState<ImageData[]>([])
   const [historyStep, setHistoryStep] = useState(-1)
+  const lastPosRef = useRef<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -44,7 +45,6 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Set canvas size
     const resizeCanvas = () => {
       const container = canvas.parentElement
       if (container) {
@@ -58,7 +58,6 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
     resizeCanvas()
     window.addEventListener("resize", resizeCanvas)
 
-    // Save initial state
     saveToHistory()
 
     return () => window.removeEventListener("resize", resizeCanvas)
@@ -148,10 +147,14 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
       ctx.lineWidth = data.size
       ctx.lineCap = "round"
       ctx.lineJoin = "round"
-      ctx.lineTo(data.x, data.y)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(data.x, data.y)
+
+      if (data.isStart) {
+        ctx.beginPath()
+        ctx.moveTo(data.x, data.y)
+      } else {
+        ctx.lineTo(data.x, data.y)
+        ctx.stroke()
+      }
     } else if (data.tool === "eraser") {
       ctx.clearRect(data.x - data.size / 2, data.y - data.size / 2, data.size, data.size)
     }
@@ -167,12 +170,27 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
 
+    lastPosRef.current = { x, y }
+
     ctx.beginPath()
     ctx.moveTo(x, y)
 
     if (tool === "fill") {
       floodFill(x, y)
       setIsDrawing(false)
+    } else {
+      const drawData: DrawData = {
+        x,
+        y,
+        color: tool === "eraser" ? "#FFFFFF" : color,
+        size: brushSize,
+        tool,
+        isStart: true,
+      }
+
+      if (socket) {
+        socket.emit("draw", { ...drawData, roomCode })
+      }
     }
   }
 
@@ -193,9 +211,12 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
       color: tool === "eraser" ? "#FFFFFF" : color,
       size: brushSize,
       tool,
+      isStart: false,
     }
 
     drawOnCanvas(drawData, ctx)
+
+    lastPosRef.current = { x, y }
 
     if (socket) {
       socket.emit("draw", { ...drawData, roomCode })
@@ -205,6 +226,7 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
   const stopDrawing = () => {
     if (isDrawing) {
       setIsDrawing(false)
+      lastPosRef.current = null
       const ctx = canvasRef.current?.getContext("2d")
       if (ctx) {
         ctx.beginPath()
@@ -279,9 +301,7 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
 
   return (
     <div className="flex flex-col h-full gap-4">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-4 p-4 bg-card rounded-xl shadow-lg border">
-        {/* Tools */}
         <div className="flex items-center gap-2">
           <Button
             size="icon"
@@ -311,7 +331,6 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
 
         <Separator orientation="vertical" className="h-8" />
 
-        {/* Colors */}
         <div className="flex items-center gap-2 flex-wrap">
           {COLORS.map((c) => (
             <button
@@ -328,7 +347,6 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
 
         <Separator orientation="vertical" className="h-8" />
 
-        {/* Brush Size */}
         <div className="flex items-center gap-3 min-w-[150px]">
           <span className="text-sm font-medium whitespace-nowrap">Size: {brushSize}</span>
           <Slider value={[brushSize]} onValueChange={(v) => setBrushSize(v[0])} min={1} max={50} step={1} />
@@ -336,7 +354,6 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
 
         <Separator orientation="vertical" className="h-8" />
 
-        {/* History */}
         <div className="flex items-center gap-2">
           <Button size="icon" variant="outline" onClick={undo} disabled={historyStep <= 0} title="Undo">
             <Undo className="w-4 h-4" />
@@ -354,13 +371,11 @@ export function Canvas({ socket, roomCode }: CanvasProps) {
 
         <Separator orientation="vertical" className="h-8" />
 
-        {/* Clear */}
         <Button size="icon" variant="destructive" onClick={clearCanvas} title="Clear Canvas">
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
 
-      {/* Canvas */}
       <div className="flex-1 bg-card rounded-xl shadow-lg border overflow-hidden">
         <canvas
           ref={canvasRef}
