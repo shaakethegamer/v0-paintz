@@ -5,32 +5,32 @@
 
 :root {
   /* Updated theme to match playful, creative design inspiration with pastel gradients and vibrant accents */
-  --background: oklch(0.99 0.01 280);
-  --foreground: oklch(0.25 0.02 280);
-  --card: oklch(1 0 0);
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222.2 84% 4.9%);
+  --card: hsl(0 0% 100%);
   --card-foreground: oklch(0.25 0.02 280);
-  --popover: oklch(1 0 0);
+  --popover: hsl(0 0% 100%);
   --popover-foreground: oklch(0.25 0.02 280);
-  --primary: oklch(0.65 0.25 280);
+  --primary: hsl(222.2 47.4% 11.2%);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.68 0.24 330);
+  --secondary: hsl(210 40% 96%);
   --secondary-foreground: oklch(0.99 0 0);
-  --muted: oklch(0.96 0.01 280);
+  --muted: hsl(210 40% 96%);
   --muted-foreground: oklch(0.55 0.02 280);
-  --accent: oklch(0.72 0.19 195);
+  --accent: hsl(210 40% 96%);
   --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.92 0.01 280);
-  --input: oklch(0.92 0.01 280);
-  --ring: oklch(0.65 0.25 280);
-  --chart-1: oklch(0.65 0.25 280);
-  --chart-2: oklch(0.68 0.24 330);
-  --chart-3: oklch(0.72 0.19 195);
-  --chart-4: oklch(0.75 0.2 150);
-  --chart-5: oklch(0.7 0.22 60);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(222.2 84% 4.9%);
+  --chart-1: hsl(12 76% 61%);
+  --chart-2: hsl(173 58% 39%);
+  --chart-3: hsl(197 37% 24%);
+  --chart-4: hsl(43 74% 66%);
+  --chart-5: hsl(27 87% 67%);
   --radius: 1rem;
-  --sidebar: oklch(0.99 0.01 280);
+  --sidebar: hsl(0 0% 98%);
   --sidebar-foreground: oklch(0.25 0.02 280);
   --sidebar-primary: oklch(0.65 0.25 280);
   --sidebar-primary-foreground: oklch(0.99 0 0);
@@ -38,7 +38,7 @@
   --sidebar-accent-foreground: oklch(0.25 0.02 280);
   --sidebar-border: oklch(0.92 0.01 280);
   --sidebar-ring: oklch(0.65 0.25 280);
-}
+  --font-sans: 'Anton', 'Anton Fallback';}
 
 .dark {
   --background: oklch(0.18 0.02 280);
@@ -76,7 +76,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Anton', 'Anton Fallback';
   --font-mono: var(--font-geist-mono);
   --color-background: var(--background);
   --color-foreground: var(--foreground);

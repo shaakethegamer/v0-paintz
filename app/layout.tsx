@@ -3,6 +3,10 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { Anton as V0_Font_Anton } from 'next/font/google'
+
+// Initialize fonts
+const _anton = V0_Font_Anton({ subsets: ['latin'], weight: ["400"] })
 
 export const metadata: Metadata = {
   title: 'v0 App',

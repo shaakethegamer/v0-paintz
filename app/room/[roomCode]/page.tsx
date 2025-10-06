@@ -1,7 +1,16 @@
 import { Suspense } from "react"
 import { RoomContent } from "@/components/room-content"
 
-export default function RoomPage({ params }: { params: { roomCode: string } }) {
+export default function RoomPage({
+  params,
+  searchParams,
+}: {
+  params: { roomCode: string }
+  searchParams: { username?: string; avatar?: string }
+}) {
+  const username = searchParams.username || "Anonymous"
+  const avatar = searchParams.avatar
+
   return (
     <Suspense
       fallback={
@@ -13,7 +22,7 @@ export default function RoomPage({ params }: { params: { roomCode: string } }) {
         </div>
       }
     >
-      <RoomContent roomCode={params.roomCode} />
+      <RoomContent roomCode={params.roomCode} username={username} avatar={avatar} />
     </Suspense>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Canvas } from "@/components/canvas"
 import { Chat } from "@/components/chat"
 import { Button } from "@/components/ui/button"
@@ -31,12 +31,16 @@ const UsersIcon = () => (
   </svg>
 )
 
-export function RoomContent({ roomCode }: { roomCode: string }) {
-  const searchParams = useSearchParams()
+export function RoomContent({
+  roomCode,
+  username,
+  avatar,
+}: {
+  roomCode: string
+  username: string
+  avatar?: string
+}) {
   const router = useRouter()
-  const username = searchParams.get("username") || "Anonymous"
-  const avatar = searchParams.get("avatar") || undefined
-
   const [socket, setSocket] = useState<Socket | null>(null)
   const [userCount, setUserCount] = useState(1)
   const [connectionError, setConnectionError] = useState<string | null>(null)

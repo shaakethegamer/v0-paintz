@@ -41,16 +41,16 @@ const UsersIcon = () => (
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 text-chart-3 bg-sidebar-ring">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 -z-10" />
 
       <Card className="w-full max-w-md p-8 shadow-2xl">
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex items-center gap-6 flex-col">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary/10 rounded-2xl">
               <PaintbrushIcon />
             </div>
-            <h1 className="text-4xl font-bold text-balance">DrawTogether</h1>
+            <h1 className="text-4xl font-bold text-balance">Paintz</h1>
           </div>
 
           <p className="text-center text-muted-foreground text-pretty">
